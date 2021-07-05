@@ -16,19 +16,38 @@ namespace VmesteApp.UI
         {
             Init();
             onHide.AddListener(OnHide);
+            VideoPlayer.started += VideoPlayerLayout.Init;
         }
         public async void Open(string filmID)
         {
             Room.RoomInfo roomInfo = await Room.GetInfo(filmID);
             Debug.LogWarning(roomInfo.mp4);
-            VideoPlayer.url = roomInfo.mp4.mp4urls[0].url;
+            string u = "";
+            for(int i = 0;i<roomInfo.mp4.mp4urls.Length;i++)
+            {
+                if(roomInfo.mp4.mp4urls[0].quality.Contains("480"))
+                {
+                    u = roomInfo.mp4.mp4urls[i].url;
+                }
+            }
+            if (u != "")
+            {
+                VideoPlayer.url = u;
+            }
+            else
+            {
+                VideoPlayer.url = roomInfo.mp4.mp4urls[roomInfo.mp4.mp4urls.Length - 1].url;
+            }
+            VideoPlayer.enabled = true;
             VideoPlayer.Play();
-            VideoPlayer.started += VideoPlayerLayout.Init;
+            VideoPlayerLayout.LoadIndicator.gameObject.SetActive(true);
         }
         public void OnHide()
         {
             VideoPlayer.Stop();
+            VideoPlayerLayout.TargetImage.color = Color.black;
             VideoPlayerLayout.isInit = false;
+            VideoPlayer.enabled = false;
         }
     }
 }

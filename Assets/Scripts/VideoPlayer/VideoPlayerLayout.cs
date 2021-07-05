@@ -19,7 +19,8 @@ namespace VmesteApp.Rooms
         public RectTransform PlayerRectTransform;
         public Slider TimeLine, VolumeLine;
         public Text TimeText;
-        public Image VolumeButtonImage, BlackBG;
+        public Image VolumeButtonImage, BlackBG, LoadIndicator;
+        public RawImage TargetImage;
         private VideoPlayer VideoPlayer;
         private void Start()
         {
@@ -29,10 +30,12 @@ namespace VmesteApp.Rooms
         {
             if (!isInit)
             {
+                TargetImage.color = Color.white;
                 VideoPlayer = source;
+                VideoPlayer.enabled = true;
                 ulong totalFrames = VideoPlayer.frameCount;
                 TimeLine.maxValue = totalFrames / VideoPlayer.frameRate;
-                PlayerRectTransform.sizeDelta = new Vector2(PlayerRectTransform.sizeDelta.x, ((float)VideoPlayer.height / (float)VideoPlayer.width) * Camera.main.pixelWidth);
+                PlayerRectTransform.sizeDelta = new Vector2(PlayerRectTransform.sizeDelta.x, ((float)VideoPlayer.height / (float)VideoPlayer.width) * Device.GetUIScreenSize().x);
                 VolumeLine.value = 0.25f;
                 VideoPlayer.GetTargetAudioSource(0).volume = 0.25f;
                 for (int i = 0; i < QualityItems.Count; i++)
@@ -57,6 +60,8 @@ namespace VmesteApp.Rooms
                 BlackBG.gameObject.SetActive(false);
                 isFullScreen = false;
                 isInit = true;
+
+                LoadIndicator.gameObject.SetActive(false);
             }
         }
         private void LateUpdate()
@@ -199,28 +204,34 @@ namespace VmesteApp.Rooms
         }
         public void ToFullScreen()
         {
-            PlayerRectTransform.pivot = fullScreenRect.pivot;
-            PlayerRectTransform.rotation = fullScreenRect.rotation;
-            PlayerRectTransform.anchorMin = fullScreenRect.anchorMin;
-            PlayerRectTransform.anchorMax = fullScreenRect.anchorMax;
-            if(Camera.main.pixelHeight * ((float)VideoPlayer.height / (float)VideoPlayer.width) <= Camera.main.pixelWidth)
-                PlayerRectTransform.sizeDelta = new Vector2(Camera.main.pixelHeight, Camera.main.pixelHeight * ((float)VideoPlayer.height / (float)VideoPlayer.width));
-            else
-                PlayerRectTransform.sizeDelta = new Vector2(Camera.main.pixelWidth * ((float)VideoPlayer.width / (float)VideoPlayer.height), Camera.main.pixelWidth);
-            PlayerRectTransform.anchoredPosition = fullScreenRect.anchoredPosition;
-            isFullScreen = true;
-            BlackBG.gameObject.SetActive(true);
+            if (!isFullScreen)
+            {
+                PlayerRectTransform.pivot = fullScreenRect.pivot;
+                PlayerRectTransform.rotation = fullScreenRect.rotation;
+                PlayerRectTransform.anchorMin = fullScreenRect.anchorMin;
+                PlayerRectTransform.anchorMax = fullScreenRect.anchorMax;
+                if (Device.GetUIScreenSize().y * ((float)VideoPlayer.height / (float)VideoPlayer.width) <= Device.GetUIScreenSize().x)
+                    PlayerRectTransform.sizeDelta = new Vector2(Device.GetUIScreenSize().y, Device.GetUIScreenSize().y * ((float)VideoPlayer.height / (float)VideoPlayer.width));
+                else
+                    PlayerRectTransform.sizeDelta = new Vector2(Device.GetUIScreenSize().x * ((float)VideoPlayer.width / (float)VideoPlayer.height), Device.GetUIScreenSize().x);
+                PlayerRectTransform.anchoredPosition = fullScreenRect.anchoredPosition;
+                isFullScreen = true;
+                BlackBG.gameObject.SetActive(true);
+            }
         }
         public void ToWindow()
         {
-            PlayerRectTransform.pivot = windowRect.pivot;
-            PlayerRectTransform.rotation = windowRect.rotation;
-            PlayerRectTransform.anchorMin = windowRect.anchorMin;
-            PlayerRectTransform.anchorMax = windowRect.anchorMax;
-            PlayerRectTransform.sizeDelta = new Vector2(windowRect.sizeDelta.x, ((float)VideoPlayer.height / (float)VideoPlayer.width) * Camera.main.pixelWidth);
-            PlayerRectTransform.anchoredPosition = windowRect.anchoredPosition;
-            isFullScreen = false;
-            BlackBG.gameObject.SetActive(false);
+            if (isFullScreen)
+            {
+                PlayerRectTransform.pivot = windowRect.pivot;
+                PlayerRectTransform.rotation = windowRect.rotation;
+                PlayerRectTransform.anchorMin = windowRect.anchorMin;
+                PlayerRectTransform.anchorMax = windowRect.anchorMax;
+                PlayerRectTransform.sizeDelta = new Vector2(windowRect.sizeDelta.x, ((float)VideoPlayer.height / (float)VideoPlayer.width) * Device.GetUIScreenSize().x);
+                PlayerRectTransform.anchoredPosition = windowRect.anchoredPosition;
+                isFullScreen = false;
+                BlackBG.gameObject.SetActive(false);
+            }
         }
     }
 }

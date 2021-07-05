@@ -3,7 +3,7 @@
     "m_SelectedPackage": {
         "deviceId": "NXEDU19830002422",
         "name": "tv.vmeste.app",
-        "processId": 1815,
+        "processId": 29037,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -36,6 +36,30 @@
             "deviceId": "NXEDU19830002422",
             "name": "tv.vmeste.app",
             "processId": 1815,
+            "exited": false
+        },
+        {
+            "deviceId": "NXEDU19830002422",
+            "name": "tv.vmeste.app",
+            "processId": 4951,
+            "exited": false
+        },
+        {
+            "deviceId": "NXEDU19830002422",
+            "name": "tv.vmeste.app",
+            "processId": 7153,
+            "exited": false
+        },
+        {
+            "deviceId": "NXEDU19830002422",
+            "name": "tv.vmeste.app",
+            "processId": 19514,
+            "exited": false
+        },
+        {
+            "deviceId": "NXEDU19830002422",
+            "name": "tv.vmeste.app",
+            "processId": 29037,
             "exited": false
         }
     ],

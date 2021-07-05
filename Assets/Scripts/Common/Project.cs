@@ -18,3 +18,10 @@ public class Project : MonoBehaviour
         public static string getRoomInfoRequest = "/api/m/room/";
     }
 }
+public static class Device
+{
+    public static Vector2 GetUIScreenSize()
+    {
+        return new Vector2(1500, 1500 * Screen.height / Screen.width);
+    }
+}
