@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using VmesteApp.Catalog;
+using VmesteApp.Auth;
 
 namespace VmesteApp.UI
 {
@@ -11,11 +12,15 @@ namespace VmesteApp.UI
     {
         private string filmID;
         public UnityEvent onInfoOpen;
-        public RawImage Image;
-        public Text Title, Info, Discription;
-        public Slider Rating;
-        public VerticalLayoutGroup ContentLayout;
-        public Comment CommentPrefab;
+        [SerializeField] private RawImage Image;
+        [SerializeField] private Text Title, Info, Discription;
+        [SerializeField] private Slider Rating;
+        [SerializeField] private VerticalLayoutGroup ContentLayout;
+        [SerializeField] private Comment CommentPrefab;
+        [SerializeField] private InputField CodeInput;
+        [SerializeField] private Animator WatchFieldAnimator;
+        private bool isCodeInput;
+
         private void Awake()
         {
             onInfoOpen = new UnityEvent();
@@ -28,7 +33,6 @@ namespace VmesteApp.UI
             Show();
             FilmInfo.FilmResult res = await FilmInfo.GetInfo(id);
             Rating.value = float.Parse(res.data.kp_raiting.Replace('.', ','));
-            Debug.Log(res.data.kp_raiting);
             Title.text = res.data.title;
             Discription.text = res.data.description;
             Info.text = $"Год выхода: {res.data.year}\n\nСтрана: {res.data.country}\n\nЖанр: ";
@@ -55,6 +59,7 @@ namespace VmesteApp.UI
                 Comment c = Instantiate(CommentPrefab, ContentLayout.transform);
                 c.Name.text = res.data.comments[i].username;
                 c.Text.text = res.data.comments[i].comment;
+                c.StartCoroutine(c.LoadAvatar(res.data.comments[i].avatar));
                 onInfoOpen.AddListener(delegate { Destroy(c.gameObject); });
             }
             for (int i = 0;i<10;i++)
@@ -79,6 +84,31 @@ namespace VmesteApp.UI
         {
             UI.Instance.VideoPlayerPanel.Show();
             UI.Instance.VideoPlayerPanel.Open(filmID);
+        }
+        public void EnterRoom()
+        {
+            UI.Instance.VideoPlayerPanel.Open(User.Instance.token, CodeInput.text);
+        }
+        public void OnJoinButtonCLicked()
+        {
+            if(!isCodeInput)
+            {
+                ShowCodeInput();
+            }
+            else
+            {
+                EnterRoom();
+            }
+        }
+        public void ShowCodeInput()
+        {
+            isCodeInput = true;
+            WatchFieldAnimator.SetTrigger("ShowInput");
+        }
+        public void HideCodeInput()
+        {
+            WatchFieldAnimator.SetTrigger("HideInput");
+            isCodeInput = false;
         }
     }
 }

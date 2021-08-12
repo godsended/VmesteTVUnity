@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.Networking;
 using VmesteApp.Catalog;
+using VmesteApp.Auth;
 
 namespace VmesteApp.UI
 {
@@ -20,6 +21,7 @@ namespace VmesteApp.UI
         [SerializeField] private GenreItem GenreItemPrefab;
         [SerializeField] private Text NewFilmsText;
         [SerializeField] private Button SiteSearchButton;
+        [SerializeField] private InputField RoomCodeInput;
         private void Awake()
         {
             onSearch = new UnityEvent();
@@ -46,10 +48,13 @@ namespace VmesteApp.UI
                 SiteSearchButton.gameObject.SetActive(false);
             }
         }
+        public void EnterRoomByCode()
+        {
+            UI.Instance.VideoPlayerPanel.Open(User.Instance.token, RoomCodeInput.text);
+        }
         public async void LoadGenres()
         {
             Genres.GenresResult ans = await Genres.Get();
-            Debug.Log(ans.data);
             if (ans.status == "success")
             {
                 for (int i = 0; i < ans.data.Length; i++)
@@ -67,12 +72,10 @@ namespace VmesteApp.UI
         {
             PopularFilms.Clear();
             Search.FilmResult ans = await Search.PopularFilms(genre);
-            Debug.Log(ans.data);
             if (ans.status == "success")
             {
                 for (int i = 0; i < ans.data.Length; i++)
                 {
-                    Debug.Log(ans.data[i].title);
                     FilmBlock fb = PopularFilms.GetEmptyFilmBlock();
                     fb.Title.text = ans.data[i].title;
                     fb.isPermanent = true;
@@ -96,12 +99,10 @@ namespace VmesteApp.UI
         {
             NewFilms.Clear();
             Search.FilmResult ans = await Search.NewFilms(genre);
-            Debug.Log(ans.data);
             if (ans.status == "success")
             {
                 for (int i = 0; i < ans.data.Length; i++)
                 {
-                    Debug.Log(ans.data[i].title);
                     FilmBlock fb = NewFilms.GetEmptyFilmBlock();
                     fb.Title.text = ans.data[i].title;
                     fb.Describtion.text = ans.data[i].description;
@@ -123,20 +124,18 @@ namespace VmesteApp.UI
                     onSearch.AddListener(fb.OnSearch);
                 }
             }
-            NewFilmsText.transform.SetSiblingIndex(1);
+            NewFilmsText.transform.SetSiblingIndex(3);
             NewFilmsText.gameObject.SetActive(true);
         }
         public async void SearchFilm()
         {
             string q = SearchBar.text;
             Search.FilmResult ans = await Search.Film(q);
-            Debug.Log(ans.data);
             if (ans.status == "success")
             {
                 onSearch.Invoke();
                 for (int i = 0; i < ans.data.Length; i++)
                 {
-                    Debug.Log(ans.data[i].title);
                     FilmBlock fb = Instantiate(FilmBlockPrefab, ContentTransform);
                     fb.Title.text = ans.data[i].title;
                     fb.Describtion.text = ans.data[i].description;

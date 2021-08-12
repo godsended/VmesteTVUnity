@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,22 +12,24 @@ namespace VmesteApp.Rooms
         private bool isActive = false;
         private bool timeLineChangeFlag = false;
         private bool isQualityPanelOpen, isFullScreen;
+        public bool isAdmin;
         public bool isInit;
         [SerializeField] private RectTransform fullScreenRect, windowRect;
         [SerializeField] private Animator Animator;
         [SerializeField] private Animator PlayButtonAnimator, QualityPanelAnimator;
-        [SerializeField] private List<QualityItem> QualityItems;
+        [SerializeField] public List<QualityItem> QualityItems;
         public RectTransform PlayerRectTransform;
         public Slider TimeLine, VolumeLine;
         public Text TimeText;
         public Image VolumeButtonImage, BlackBG, LoadIndicator;
         public RawImage TargetImage;
         private VideoPlayer VideoPlayer;
-        private void Start()
+        [SerializeField] private AudioSource AudioSource;
+        private void Awake()
         {
-            UI.UI.Instance.VideoPlayerPanel.onHide.AddListener(delegate { isInit = false; });
+            UI.UI.Instance.VideoPlayerPanel.VideoPlayer.started += Init;
         }
-        public void Init(VideoPlayer source)
+        public async void Init(VideoPlayer source)
         {
             if (!isInit)
             {
@@ -61,42 +64,82 @@ namespace VmesteApp.Rooms
                 isFullScreen = false;
                 isInit = true;
 
+                await Room.JoinServer(isAdmin);
+
+                if (isAdmin)
+                    await Room.SendActionCommand("resume");
+
+                Room.jws.OnMessage += UI.UI.Instance.VideoPlayerPanel.CheckActions;
+
+                UI.UI.Instance.VideoPlayerPanel.UpdateRoom();
+
                 LoadIndicator.gameObject.SetActive(false);
+            }
+        }
+        private void Update()
+        {
+            if (VideoPlayer == null)
+                return;
+
+            AudioSource.time = (float)VideoPlayer.time;
+
+            if ((VideoPlayer.isPaused || !VideoPlayer.isPlaying) && AudioSource.isPlaying)
+            {
+                AudioSource.Pause();
+                return;
+            }
+
+            if ((!VideoPlayer.isPaused && VideoPlayer.isPlaying) && !AudioSource.isPlaying)
+            {
+                AudioSource.Play();
+                return;
             }
         }
         private void LateUpdate()
         {
-            if (VideoPlayer != null)
+            if (VideoPlayer == null)
+                return;
+
+            if (VideoPlayer.isPlaying)
             {
-                if (VideoPlayer.isPlaying)
-                {
-                    timeLineChangeFlag = true;
-                    TimeLine.value = (float)VideoPlayer.time;
+                timeLineChangeFlag = true;
+                TimeLine.value = (float)VideoPlayer.time;
 
-                    System.TimeSpan time = System.TimeSpan.FromSeconds(TimeLine.value);
-                    System.TimeSpan totalTime = System.TimeSpan.FromSeconds(TimeLine.maxValue);
+                System.TimeSpan time = System.TimeSpan.FromSeconds(TimeLine.value);
+                System.TimeSpan totalTime = System.TimeSpan.FromSeconds(TimeLine.maxValue);
 
-                    TimeText.text = "";
-                    if (time.Hours != 0)
-                        TimeText.text += time.Hours.ToString() + ":";
-                    TimeText.text += time.Minutes + ":" + time.Seconds + " / ";
+                TimeText.text = "";
+                if (time.Hours != 0)
+                    TimeText.text += time.Hours.ToString() + ":";
+                TimeText.text += time.Minutes + ":" + time.Seconds + " / ";
 
-                    if (totalTime.Hours != 0)
-                        TimeText.text += totalTime.Hours.ToString() + ":";
-                    TimeText.text += totalTime.Minutes + ":" + totalTime.Seconds;
-                }
+                if (totalTime.Hours != 0)
+                    TimeText.text += totalTime.Hours.ToString() + ":";
+                TimeText.text += totalTime.Minutes + ":" + totalTime.Seconds;
+            }
+            Room.progress = TimeLine.value;
+            Room.isPause = !VideoPlayer.isPaused;
+        }
+        public async void Pause()
+        {
+            if (VideoPlayer.isPaused == false)
+            {
+                VideoPlayer.Pause();
+                PlayButtonAnimator.SetTrigger("OnPause");
+                if (isAdmin)
+                    await Room.SendActionCommand("pause");
             }
         }
-        public void Pause()
+        public async void Play()
         {
-            VideoPlayer.Pause();
-            PlayButtonAnimator.SetTrigger("OnPause");
-        }
-        public void Play()
-        {
-            VideoPlayer.Play();
-            PlayButtonAnimator.SetTrigger("OnPlay");
-            //Hide(5000);
+            if (VideoPlayer.isPaused == true)
+            {
+                VideoPlayer.Play();
+                PlayButtonAnimator.SetTrigger("OnPlay");
+                //Hide(5000);
+                if (isAdmin)
+                    await Room.SendActionCommand("resume");
+            }
         }
         public void Show()
         {
@@ -116,6 +159,7 @@ namespace VmesteApp.Rooms
                 Animator.StopPlayback();
                 PlayButtonAnimator.StopPlayback();
                 Animator.SetTrigger("Hide");
+                Room.AbortJWSThred();
             }
         }
         public async void Hide(int time)
@@ -148,7 +192,7 @@ namespace VmesteApp.Rooms
                 Pause();
             }
         }
-        public void OnTimeLineMooved()
+        public async void OnTimeLineMooved()
         {
             if (timeLineChangeFlag)
             {
@@ -156,17 +200,20 @@ namespace VmesteApp.Rooms
             }
             else
             {
+                Debug.Log("Mooved");
                 VideoPlayer.time = TimeLine.value;
+                if (isAdmin)
+                    await Room.SendActionCommand("resume");
             }
         }
         public void OnVolumeLineMooved()
         {
             VideoPlayer.GetTargetAudioSource(0).volume = VolumeLine.value;
-            if(VolumeLine.value == 0)
+            if (VolumeLine.value == 0)
             {
 
             }
-            if(VolumeLine.value == 1)
+            if (VolumeLine.value == 1)
             {
 
             }
@@ -181,7 +228,7 @@ namespace VmesteApp.Rooms
         }
         public void OnSettingsButtonClick()
         {
-            if(isQualityPanelOpen)
+            if (isQualityPanelOpen)
             {
                 QualityPanelAnimator.SetTrigger("Hide");
             }
@@ -193,7 +240,7 @@ namespace VmesteApp.Rooms
         }
         public void OnFullScreen()
         {
-            if(isFullScreen)
+            if (isFullScreen)
             {
                 ToWindow();
             }

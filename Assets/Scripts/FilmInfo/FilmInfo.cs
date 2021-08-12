@@ -18,9 +18,10 @@ namespace VmesteApp.Catalog
 
             string responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
 
+            Debug.Log(responseString);
+
             FilmResult res = JsonUtility.FromJson<FilmResult>(responseString);
 
-            Debug.Log(responseString);
             return res;
         }
         [System.Serializable]
@@ -57,6 +58,7 @@ namespace VmesteApp.Catalog
                     public string username;
                     public string comment;
                     public string mark;
+                    public string avatar;
                 }
             }
             public string status;

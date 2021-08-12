@@ -24,7 +24,6 @@ namespace VmesteApp.Catalog
             {
                 FilmBlock fb = Instantiate(SimpleFilmBlockPrefab, ContentTransform);
                 Films.Add(fb);
-                Debug.Log("Instasiated");
                 return fb;
             }
         }

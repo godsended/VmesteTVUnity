@@ -8,16 +8,10 @@ public static class Cache
 {
     public static void SaveImage(string name, byte[] bytes)
     {
-        Debug.Log("Save path " + URL.Image + name);
-        Debug.Log("Persistant: " + Application.persistentDataPath);
-        Debug.Log("Name: " + name);
         File.WriteAllBytes(URL.Image + name, bytes);
     }
     public static byte[] LoadImage(string name)
     {
-        Debug.Log("Load path " + URL.Image + name);
-        Debug.Log("Persistant: " + Application.persistentDataPath);
-        Debug.Log("Name: " + name);
         if (IsImageSaved(name))
             return File.ReadAllBytes(URL.Image + name);
         else return null;
